@@ -5,14 +5,14 @@ const Process = require('./process');
 
 class Traceroute extends Process {
     constructor(ipVersion = '', sendwait = 0) {
-        const args = ['-q', 1, '-z', sendwait, '-n'];
+        const args = ['-n', '-l', 29, '-m', 15];
 
         const ipFlag = Flag.getIpFlag(ipVersion);
         if (ipFlag) {
             args.push(ipFlag);
         }
 
-        super('traceroute', args);
+        super('tracepath', args);
     }
 
     parseDestination(data) {
@@ -28,27 +28,17 @@ class Traceroute extends Process {
     }
 
     parseHop(hopData) {
-        const regex = /^\s*(\d+)\s+(?:([a-zA-Z0-9:.]+)\s+([0-9.]+\s+ms)|(\*))/;
-        const parsedData = new RegExp(regex, '').exec(hopData);
-
+        const parsedData = hopData.replace(/\s+/g, ' ').trim()
         let result = null;
         if (parsedData !== null) {
-            if (parsedData[4] === undefined) {
+            if (isNaN(parsedData.split(" ")[1].slice("")[0]) === false) {
                 result = {
-                    hop: parseInt(parsedData[1], 10),
-                    ip: parsedData[2],
-                    rtt1: parsedData[3]
-                };
-            }
-            else {
-                result = {
-                    hop: parseInt(parsedData[1], 10),
-                    ip: parsedData[4],
-                    rtt1: parsedData[4]
+                    hop: parsedData.split(" ")[0].split(":")[0],
+                    ip: parsedData.split(" ")[1],
+                    rtt1: parsedData.split(" ")[2]
                 };
             }
         }
-
         return result;
     }
 }
